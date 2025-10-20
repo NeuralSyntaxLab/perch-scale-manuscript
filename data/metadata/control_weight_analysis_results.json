@@ -1,0 +1,44 @@
+{
+    "5": {
+        "mode_weight": 5.01,
+        "median_weight": 5.01,
+        "std_weight": 0.045314091797535566,
+        "num_records": 72156,
+        "actual_weight": 5
+    },
+    "15": {
+        "mode_weight": 15.78,
+        "median_weight": 15.78,
+        "std_weight": 0.04129731433185387,
+        "num_records": 58144,
+        "actual_weight": 15.75
+    },
+    "17": {
+        "mode_weight": 17.39,
+        "median_weight": 17.38,
+        "std_weight": 0.04498175164617445,
+        "num_records": 68826,
+        "actual_weight": 17.3
+    },
+    "26": {
+        "mode_weight": 26.57,
+        "median_weight": 26.57,
+        "std_weight": 0.043754262482896,
+        "num_records": 72153,
+        "actual_weight": 26.8
+    },
+    "30": {
+        "mode_weight": 29.9,
+        "median_weight": 29.9,
+        "std_weight": 0.07635550117787976,
+        "num_records": 349245,
+        "actual_weight": 30
+    },
+    "40": {
+        "mode_weight": 40.56,
+        "median_weight": 40.56,
+        "std_weight": 0.056889333655670504,
+        "num_records": 349245,
+        "actual_weight": 40.6
+    }
+}
