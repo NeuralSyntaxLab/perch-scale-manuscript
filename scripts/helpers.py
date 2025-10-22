@@ -1,7 +1,10 @@
 from __future__ import annotations
 from pathlib import Path
 import pandas as pd
+import numpy as np
+import warnings
 from scripts import _paths as P
+
 
 def read_timeseries(
     file_path: str | Path,
@@ -94,3 +97,110 @@ def find_bird_file(bird_id: str | int, birds_dir: Path = P.BIRDS) -> Path:
     raise FileNotFoundError(
         f"No CSV found for bird '{bird_id}'. Tried: {', '.join(str(c) for c in candidates)}"
     )
+
+
+def find_stable_estimates(df, win_size=10, step=2, weight_fraction=0.09, reference_weight=None):
+    """
+    Compute 'stable' perch-scale estimates from a time series by scanning fixed-size windows
+    and retaining those whose standard deviation (SD) is less than or equal to a threshold
+    defined as (weight_fraction * reference_weight).
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        DataFrame with columns:
+            - 'Time': datetime-like or numeric, assumed sorted and regularly sampled elsewhere
+            - 'weight': numeric grams, pre-filtered for artifacts elsewhere
+    win_size : int, default 10
+        Window size in *samples*. At ~1 Hz this corresponds to ~10 seconds.
+    step : int, default 2
+        Stride between successive window starts (in samples).
+    weight_fraction : float, default 0.09
+        Fraction of the reference weight used as the SD stability threshold.
+        For the canonical method, 0.09 => SD ≤ 9% of manual weight.
+    reference_weight : float or None, default None
+        Manual bird weight in grams. If None, a fallback estimate is derived from
+        the mode of df['weight'] (or from the mean if a mode is unavailable).
+        A warning is issued when using this fallback.
+
+    Returns
+    -------
+    stable_df : pandas.DataFrame
+        DataFrame with the mean 'weight' of each stable window at its center 'Time':
+            - 'Time'
+            - 'weight'
+
+    Notes
+    -----
+    - Stability criterion: SD (computed with ddof=1) ≤ weight_fraction * reference_weight.
+    - For typical use (10-sample windows over ~600k samples), using ddof=1 (sample SD)
+      is recommended; the difference from ddof=0 is small but ddof=1 is the standard
+      unbiased estimator for windowed samples.
+    """
+    if win_size <= 0:
+        raise ValueError("win_size must be a positive integer.")
+    if step <= 0:
+        raise ValueError("step must be a positive integer.")
+    if 'Time' not in df.columns or 'weight' not in df.columns:
+        raise ValueError("df must contain 'Time' and 'weight' columns.")
+
+    weights = df['weight'].to_numpy()
+    times = df['Time'].to_numpy()
+
+    n = len(weights)
+    if n < win_size:
+        # Not enough samples to form a single window
+        return pd.DataFrame({'Time': pd.Series([], dtype=df['Time'].dtype),
+                             'weight': pd.Series([], dtype=float)})
+
+    # Derive reference weight if not supplied (robust fallback)
+    ref_w = reference_weight
+    if ref_w is None:
+        mode_weight = pd.Series(weights).mode(dropna=True)
+        if len(mode_weight) == 0:
+            ref_w = float(np.nanmean(weights))  # last-resort fallback
+            warnings.warn(
+                "reference_weight not provided; falling back to mean weight of series. "
+                "Provide the manual weight for canonical behavior."
+            )
+        else:
+            ref_w = float(mode_weight.mean())
+            warnings.warn(
+                "reference_weight not provided; falling back to mode-based estimate. "
+                "Provide the manual weight for canonical behavior."
+            )
+        if pd.isna(ref_w):
+            # All-NaN case after fallback
+            return pd.DataFrame({'Time': pd.Series([], dtype=df['Time'].dtype),
+                                 'weight': pd.Series([], dtype=float)})
+        if ref_w < 12:
+            warnings.warn(
+                f"Derived reference weight {ref_w:.2f} g seems unusually low. "
+                "Check data quality or pass a manual reference weight."
+            )
+
+    std_threshold = weight_fraction * ref_w
+
+    means = []
+    center_times = []
+
+    # Sliding window scan
+    # Use sample SD (ddof=1) as recommended for finite windows
+    for start in range(0, n - win_size + 1, step):
+        win = weights[start:start + win_size]
+        # Skip windows with NaNs
+        if np.isnan(win).any():
+            continue
+        win_std = np.std(win, ddof=1)
+        if win_std <= std_threshold:
+            win_mean = float(np.mean(win))
+            center_idx = start + win_size // 2
+            means.append(win_mean)
+            center_times.append(times[center_idx])
+
+    if not means:
+        return pd.DataFrame({'Time': pd.Series([], dtype=df['Time'].dtype),
+                             'weight': pd.Series([], dtype=float)})
+
+    stable_df = pd.DataFrame({'Time': np.array(center_times), 'weight': np.array(means)})
+    return stable_df
