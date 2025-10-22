@@ -1,9 +1,7 @@
-
-
-
 from __future__ import annotations
 from pathlib import Path
 import pandas as pd
+from scripts import _paths as P
 
 def read_timeseries(
     file_path: str | Path,
@@ -79,18 +77,20 @@ def read_timeseries(
 
     return df.sort_values("Time").reset_index(drop=True)
 
-def find_bird_file(birds_dir: Path, bird_name: str) -> Path:
+def find_bird_file(bird_id: str | int, birds_dir: Path = P.BIRDS) -> Path:
     """
     Return the path to the bird CSV in data/birds/, accepting either
-    'a_<bird>_weight_report.csv.gz' or '.csv'.
+    'bird_<ID>_weight_report.csv.gz' or '.csv'.
     """
+    birds_dir = birds_dir or P.BIRDS  # use default if not provided
+    bird_id = str(bird_id)
     candidates = [
-        birds_dir / f"a_{bird_name}_weight_report.csv.gz",
-        birds_dir / f"a_{bird_name}_weight_report.csv",
+        birds_dir / f"bird_{bird_id}_weight_report.csv.gz",
+        birds_dir / f"bird_{bird_id}_weight_report.csv",
     ]
     for p in candidates:
         if p.exists():
             return p
     raise FileNotFoundError(
-        f"No CSV found for bird '{bird_name}'. Tried: {', '.join(str(c) for c in candidates)}"
+        f"No CSV found for bird '{bird_id}'. Tried: {', '.join(str(c) for c in candidates)}"
     )
