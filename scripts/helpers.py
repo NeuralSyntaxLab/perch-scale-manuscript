@@ -80,6 +80,7 @@ def read_timeseries(
 
     return df.sort_values("Time").reset_index(drop=True)
 
+
 def find_bird_file(bird_id: str | int, birds_dir: Path = P.BIRDS) -> Path:
     """
     Return the path to the bird CSV in data/birds/, accepting either

@@ -11,8 +11,7 @@ print(base_path)
 control_bpath = base_path / "control_exp" 
 # current_fname = '40'
 res = {}
-control_fnames = ['5', '11', '15', '17', '26', '30_long', '40_long']
-# control_fnames = ['26_8']
+control_fnames = ['5', '15', '17', '26', '30', '40']
 for fname in control_fnames:
     # Read to csv
     current_fname = fname
@@ -66,7 +65,7 @@ for fname in control_fnames:
 
 actual_weight_mapping = {}
 # Define actual weights for each control file
-actual_weights = [5, 11.2, 15.75, 17.3, 26.8, 30, 40.6]
+actual_weights = [5, 15.75, 17.3, 26.8, 30, 40.6]
 # Map control_fnames to actual weights
 for fname, weight in zip(control_fnames, actual_weights):
     actual_weight_mapping[fname] = weight
