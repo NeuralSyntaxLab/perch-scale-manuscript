@@ -4,6 +4,10 @@ This repository contains the **data, analysis scripts, and figure-generation not
 
 It provides all materials required to reproduce the results and figures presented in the study, and serves as an accessible example of how to organize, process, and visualize weight data collected from multiple perch-scale sensors.
 
+<p align="left">
+    <img src="https://github.com/user-attachments/assets/27e0cfaa-9621-4f2f-849d-2f27458e2df8" alt="Description" style="width:30%;">
+</p>
+
 ---
 
 ## 📖 Overview
